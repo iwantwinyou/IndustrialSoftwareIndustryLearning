@@ -1,0 +1,8 @@
+1、此电脑搜索\\172.16.0.222
+2、aoi
+3、在日志中找app version   出现版本号  aoi中找到对应的版本号
+4、把版本号拉到自己创建的文件夹(复制)
+5、把dmp文件拖pdb中在拖windgb_exe
+6、File-》Symbol File path  复制路径~
+7、!analyze -v
+8、Debug session time：....21:00:48.000 后三位用dmp后三位代替找崩溃时间

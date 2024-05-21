@@ -1,0 +1,14 @@
+Gene  新的片料触发   Trigger Position 新片料触发时候的码数
+TrigerPinOut 相机触发拍照，这个也是对应的这个相机工位对应的下位机OUT口
+ScanningExecutionQueue  这个是相机触发函数  CrentPosition当前码数   Position要拍照的码数
+BeforeUpIdCallback 拍照前上传ID
+AfterUpIdCallback  拍照后上传ID
+Request results  请求结果
+Receve Sheet Result   接收到的上位机结果
+Forced switch of alarm light   切换报警灯状态
+[RuningModeSelect]this->NormalMode = *  当前的状态
+[AlarmTask]Receve Alart Mode  ***  TimeOfDuration = ***要切换的报警灯模式
+[BeforeRuning]this->NormalMode * 结束后要返回的模式
+Heart Stop!!! AlarmLight Start!!!  上位机心跳停止，报警，进入第3个模式
+AOI Exit Normally AOI软件退出
+Trigger failed 触发失败，引起这个原因是滤波设置的大了或者两个触发时间太短
