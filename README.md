@@ -1,0 +1,2 @@
+# IndustrialSoftwareIndustryLearning
+入门工业软件学习一些技术栈
