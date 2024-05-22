@@ -116,7 +116,20 @@ void ReadingThread::stop()
 
 void ReadingThread::run()
 {
-	QFile file("W:/data.txt");
+	//QFile file("W:/data.txt");
+	//if (!file.open(QIODevice::Text | QIODevice::ReadOnly))
+	//{
+	//	return;
+	//}
+
+	//QTextStream in(&file);
+	//while (!in.atEnd())
+	//{
+	//	QString line = in.readLine();
+	//	m_textEdit->append(line);
+	//}
+
+	QFile file("W:/qt/Docs/Qt-5.9.9/qtgui/qtgui.index");
 	if (!file.open(QIODevice::Text | QIODevice::ReadOnly))
 	{
 		return;
@@ -126,9 +139,15 @@ void ReadingThread::run()
 	while (!in.atEnd())
 	{
 		QString line = in.readLine();
-		m_textEdit->append(line);
+		//此时会崩溃
+		//m_textEdit->append(line);
+		//Qt 中一个线程里不能直接调用另一个线程的对象的函数，解决这个问题很简单，把 textEdit->append(line) 替换为 QMetaObject::invokeMethod(textEdit, "append", Q_ARG(QString, line)) 即可，想要知道为什么，请参考 线程一调用线程二中函数的正确姿势。
+		QMetaObject::invokeMethod(m_textEdit, "append", Q_ARG(QString, line));
+		//为了减少 UI 线程更新界面的频率，读取一行后暂停 1ms，就能看到内容不停的被添加到 text edit 中，证明了读取文件的线程没有阻塞 UI 线程
+		QThread::msleep(1);
 	}
 }
+
 
 **重用线程**
 线程结束运行后仍然可以再次调用 start() 重新启动。使用这个特性，可以重复利用线程执行任务，而不是每次都创建一个新的线程，创建线程需要和操作系统打交道，是很消耗资源的操作，所以能够重用就尽量重用，Qt 提供了线程池 QThreadPool 就是为了重复利用线程，避免大量的创建线程，提高程序的效率。
