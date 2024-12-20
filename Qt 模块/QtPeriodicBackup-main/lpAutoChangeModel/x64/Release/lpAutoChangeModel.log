@@ -1,0 +1,13 @@
+﻿  Moc'ing ..\..\mb002\include\modelCtrl.h...
+  Moc'ing lpAutoChangeModel.h...
+  Moc'ing lpautochangemodel_global.h...
+  Moc'ing lpqtconnnOtherApp.h...
+  modelCtrl.cpp
+  lpAutoChangeModel.cpp
+  lpqtconnnOtherApp.cpp
+  moc_modelCtrl.cpp
+  moc_lpAutoChangeModel.cpp
+  moc_lpautochangemodel_global.cpp
+  moc_lpqtconnnOtherApp.cpp
+    正在创建库 E:\Git_ipu\soft_dev\tpvs17\..\runner17\x64\lpAutoChangeModel.lib 和对象 E:\Git_ipu\soft_dev\tpvs17\..\runner17\x64\lpAutoChangeModel.exp
+  lpAutoChangeModel.vcxproj -> E:\Git_ipu\soft_dev\tpvs17\..\runner17\x64\lpAutoChangeModel.dll
