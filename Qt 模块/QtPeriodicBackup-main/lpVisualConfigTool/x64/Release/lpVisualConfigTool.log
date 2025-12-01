@@ -1,0 +1,17 @@
+﻿  Moc'ing UiReadTableSet.h...
+  Moc'ing UiDiySet.h...
+  Moc'ing PLCConfigWidget.h...
+  Moc'ing DataBaseConfig.h...
+  Moc'ing lpvisualconfigtool_global.h...
+  DataBaseConfig.cpp
+  moc_DataBaseConfig.cpp
+  moc_PLCConfigWidget.cpp
+  moc_UiDiySet.cpp
+  moc_UiReadTableSet.cpp
+  moc_lpvisualconfigtool_global.cpp
+  PLCConfigWidget.cpp
+  UiDiySet.cpp
+  UiReadTableSet.cpp
+  lpVisualConfigTool.cpp
+    正在创建库 E:\Git_ipu\soft_dev\tpvs17\..\runner17\x64\lpVisualConfigTool.lib 和对象 E:\Git_ipu\soft_dev\tpvs17\..\runner17\x64\lpVisualConfigTool.exp
+  lpVisualConfigTool.vcxproj -> E:\Git_ipu\soft_dev\tpvs17\..\runner17\x64\lpVisualConfigTool.dll
