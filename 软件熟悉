@@ -1,0 +1,254 @@
+Demura是一种用于消除显示屏亮度或色彩不均（Mura现象）的技术。
+Demura的定义与来源
+“Mura”源自日语汉字“斑”（むら），本意指不均匀、不一致或瑕疵。在显示屏行业中，Mura指屏幕亮度或色彩不均匀的现象，常见于LCD、OLED、MiniLED等显示设备上。Demura技术的名称即来源于“Defect/Mura Correction”，意为“消除Mura缺陷”的技术 
+知乎
+知乎
++1
+。
+
+Demura的工作原理
+Demura技术通过检测和补偿两个步骤实现画面均匀化：
+
+使用高分辨率CCD或光学成像系统拍摄显示屏在不同灰阶或RGB画面下的亮度分布。
+分析每个像素的亮度或色彩偏差，计算所需的增益或偏移补偿值。
+将补偿数据写入显示驱动芯片的查找表（LUT），实时调整像素电压或灰阶值，使过暗区域变亮、过亮区域变暗，从而消除Mura现象 
+CSDN
+CSDN
++2
+。
+Demura的应用
+Demura技术广泛应用于：
+
+OLED和AMOLED显示屏
+MiniLED和大尺寸LCD面板
+手机、电视、汽车仪表板、VR/AR设备等高性能显示设备
+通过Demura技术，可以显著提升显示器的亮度均匀性和色彩一致性，改善用户观看体验 
+知乎
+知乎
++2
+。
+Demura的意义
+Mura现象会导致屏幕出现亮度或色彩不均，影响视觉效果。Demura技术通过软件算法和硬件补偿相结合的方式，弥补制造工艺偏差，使显示画面更加清晰、均匀，提升显示设备的整体品质和用户体验 
+知乎
+知乎
++2
+。
+
+ 软件采用 任务队列驱动 架构，通过信号/槽机制串联各模块
+
+
+Common模块：
+  - 类型定义与枚举（commonbase.h）：相机类型、采集卡型号、通讯参数、色度计参数等
+  - 统一错误码体系（errorcode.h）：涵盖 GUI、Modbus、Camera、PG、Python引擎、Demura OTP 等子系统
+  - 版本信息（version.h）
+  - 大量第三方库（thirdparty/）：OpenCV、Matlab Runtime、Python、Boost、Eigen、Modbus、各类相机/采集卡 SDK、加密狗等
+  
+
+HAL模块 — 硬件抽象（三层插件架构（通用接口 → 管理器 → 厂商驱动））
+相机：
+采集卡：
+PG：
+运动控制器：
+光源：
+色度计：
+
+
+GUI模块：界面
+
+
+核心过程线程：QDemuraProcessThread（主流程）、CThreadCapture（采图）、CThreadPGControl（PG控制）、CThreadOTP/CThreadFl
+  ash（烧录）、CThreadFinalCheck（最终检测）
+  
+  1. 权限登录 → 操作员/管理员不同权限
+  2. 产品配置 → 导入配方（模组配置 + 采集参数 + 算法配置）
+  3. 自动对焦 → 相机自动调节到最佳焦距
+  4. 自动曝光 → 相机自动调节曝光参数
+  5. 压接点屏 → 压接屏体、PG点亮测试画面
+  6. 采集图片 → 相机拍摄 RGB 各灰阶画面
+  7. 数据处理 → Demura 算法计算补偿数据
+  8. OTP/Flash 烧录 → 将补偿数据写入驱动 IC
+  9. 最终检查 → 验证补偿效果（功耗检测、亮度检测等）
+
+  支持 自动模式（产线全自动）和 手动模式（单机调试）。
+  
+  技术栈总结
+
+  ┌──────────┬──────────────────────────────────────────────────────────────────┐
+  │   层面   │                               技术                               │
+  ├──────────┼──────────────────────────────────────────────────────────────────┤
+  │ 语言     │ C++17                                                            │
+  ├──────────┼──────────────────────────────────────────────────────────────────┤
+  │ GUI框架  │ Qt 5.9（Widgets + Charts + Quick + SQL + Network + SerialPort）  │
+  ├──────────┼──────────────────────────────────────────────────────────────────┤
+  │ 图像处理 │ OpenCV 3.4.3                                                     │
+  ├──────────┼──────────────────────────────────────────────────────────────────┤
+  │ 算法     │ Matlab 编译 DLL / OpenCV 版本（mDMR4OLED、cvDMR4OLED、cvDMRLCD） │
+  ├──────────┼──────────────────────────────────────────────────────────────────┤
+  │ 脚本     │ Python 嵌入（Py文件 OTP/Demura Flash 烧录脚本）                  │
+  ├──────────┼──────────────────────────────────────────────────────────────────┤
+  │ 通讯协议 │ TCP/IP、Modbus RTU、MQTT、RS232/RS485、UDP                       │
+  ├──────────┼──────────────────────────────────────────────────────────────────┤
+  │ 数据存储 │ SQL 数据库 + XML 配置文件 + CSV 导出                             │
+  ├──────────┼──────────────────────────────────────────────────────────────────┤
+  │ 第三方库 │ Boost 1.74、Eigen、QuaZIP、QCustomPlot、SuperDog（加密狗）       │
+  ├──────────┼──────────────────────────────────────────────────────────────────┤
+  │ 版本控制 │ Git（原 SVN 迁移）                                               │
+  └──────────┴──────────────────────────────────────────────────────────────────┘
+  
+  代码规模与特点
+
+  - 大规模工业应用：HAL 层含 348 个子目录，支持十余种硬件厂商
+  - 插件化设计：相机、PG、运动控制器均采用动态加载 DLL 插件模式，扩展新硬件无需修改主体代码
+  - 单体 GUI 架构：所有 UI 模块通过 .pri 文件包含编译为单个 exe，模块间通过 Qt 信号/槽和 SQL 管理器通信
+  - 任务队列驱动：自动化流程通过 QTaskDispatcher → QTaskFlowControl 任务调度链路执行
+  - 多线程：采图、PG控制、Demura处理、烧录、最终检测均使用独立工作线程
+  
+  
+  这是一个 OLED/LCD Demura（显示补偿）工业检测系统，采用 Qt/C++ + OpenCV
+  构建，插件化架构支持十余种相机、PG、运动控制器。
+  
+  
+  OTP&擦除
+  一次性编程：OTP存储器只能被编程一次，编程后数据无法更改或擦除。这意味着一旦写入数据，就无法恢复到原始状态
+  不可擦除：OTP的设计使其在编程后无法进行擦除操作，因此在使用时需要谨慎，确保写入的数据是最终的
+  
+  
+  
+  2026-6-17
+  1、MQTT（Message Queuing Telemetry Transport）是一种轻量级、基于发布-订阅模式的消息传输协议，适用于资源受限的设备和低带宽、高延迟或不稳定的网络环境。
+  它在物联网应用中广受欢迎，能够实现传感器、执行器和其它设备之间的高效通信。
+  
+  2026-6-18
+  1、cardan项目：OLED Demura（消除Mura/显示不均补偿）系统，用于OLED显示屏生产线上对面板进行自动光学检测和补偿校准
+  
+  1.点屏   │───▶│ 2.OTP/擦除│───▶│ 3.图像采集 │───▶│ 4.算法处理 │───▶│ 5.Flash烧录│───▶│ 6.最终检测 │
+    │ Display │    │ OTP/Erase│    │ Capture  │    │ Process  │    │   Write   │    │  Check   │
+    └─────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘    └──────────┘
+         │              │              │              │              │              │
+      PG点屏        烧录OTP/       相机拍照        生成补偿       烧录补偿        再次拍照
+     显示测试图     擦除Flash      采集图像        Flash数据      数据到Flash     验证效果
+	 
+	   ┌──────────────────────┐
+                     │   QTaskDispatcher    │  ← 接收外部任务/主控命令
+                     │   (任务调度器)        │
+                     └──────┬───────────────┘
+                            │ sig_subTaskProcess(StationMessage)
+                            ▼
+                ┌───────────────────────┐
+                │   QStationManager     │  ← 管理所有工位
+                │   (工位管理器/单例)    │
+                └──────┬────────────────┘
+                       │ 1:N 管理
+                       ▼
+      ┌─────────────────────────────────────┐
+      │         QStationTask (工位任务)       │  ← 每个工位一个实例
+      │  ┌───────────┐  ┌────────────────┐  │
+      │  │CThreadPg   │  │ CThreadOTP     │  │
+      │  │Control     │  │ (OTP烧录线程)  │  │
+      │  │(PG控制线程)│  └────────────────┘  │
+      │  └───────────┘                      │
+      │  ┌───────────┐  ┌────────────────┐  │
+      │  │CThreadCapture     │  │ CThreadFlash 
+      │  │     │ (Flash烧录线程) │  │
+      │  │(图像采集)  │  └────────────────┘  │
+      │  └─────┬─────┘                      │
+      │        │ 内含                        │
+      │  ┌─────▼──────────────────────┐     │
+      │  │ QDemuraProcessThread       │     │
+      │  │ (算法处理线程 — 多实例)     │     │
+      │  └────────────────────────────┘     │
+      │  ┌────────────────────────────┐     │
+      │  │ CThreadFinalCheck          │     │
+      │  │ (最终检测线程)              │     
+	  
+	  
+	  ┌──────────────────────────────────────────────────────────┐
+  │                   Demura 主控系统                          │
+  │                                                           │
+  │  系统配置 ──▶ 配方加载 ──▶ 工位任务调度 ──▶ 结果输出       │
+  │                                                           │
+  │  数据存储:                                                  │
+  │  ├─ SQLite (产能/结果数据库)                                │
+  │  ├─ CSV (历史记录)                                         │
+  │  ├─ INI (系统配置/窗口位置)                                  │
+  │  └─ JSON (通信参数)                                        │
+  └──────────────────────────────────────────────────────────┘
+       │              │              │
+       ▼              ▼              ▼
+  ┌─────────┐   ┌─────────┐   ┌──────────┐
+  │ MQTT    │   │ Modbus  │   │ Socket   │
+  │ (物联网) │   │ (PLC通信)│   │ (主控通信) │
+  └─────────┘   └─────────┘   └──────────┘
+  
+  
+  
+  ┌──────────────────────────────────────────────────────────────────────────────┐
+  │ 阶段1: 点屏      →  阶段2: OTP/擦除  →  阶段3: 采集+处理   →  阶段4: 烧录    │
+  │ (DISPLAY)           (OTP)              (GRAB | PROCESS)      (WRITE)         │
+  │                                                                              │
+  │                                                    ┌─ 阶段5: 最终检测 ─┐    │
+  │                                                    │   (CHECK)          │    │
+  │                                                    └────────────────────┘    │
+  │                                                              │              │
+  │                                                    ┌─ 阶段6: 结束收尾 ─┐    │
+  │                                                    │ (保存结果/写数据库) │    │
+  │                                                    └────────────────────┘    │
+  └──────────────────────────────────────────────────────────────────────────────┘
+  
+  
+  点击开始 开始任务
+  MainWindow::on_btnStart_clicked()
+  m_pTaskFlowControl->slt_startTask(stationID, panelID)
+  QTaskFlowControl::slt_startTask()
+  emit sig_startTask(nStationID, strPanelID,TASK_MASSAGE_DEMURA_DISPLAY) 初始任务类型=点屏
+  
+  任务调度 工位管理
+  QTaskDispatcher::sig_startTask (信号)
+  QStationManager::slt_startStationTask(nStationID, strPanelID, nTaskType)
+  m_mapStationTask[nStationID]->StartStationTask(strPanelID)启动工位任务
+  emit sig_subTaskProcess(message)    发送第一个子任务：点屏
+  emit sig_taskUpateStatus(result)    通知UI更新状态
+  
+  工位任务 分发到五个子线程
+  QStationManager::sig_subTaskProcess(StationMessage)
+  QStationTask::slt_taskProcess(StationMessage message)
+  emit sig_itomTaskProcess(msg)    广播给所有5个子线程  5个子线程同时收到信号，各自检查 nTaskType 是否匹配: 
+  各子线程执行  返回结果
+  emit sig_taskFinished(TaskReturn):
+  点屏线程 (CThreadPgControl)emit sig_taskFinished(ret)
+  OTP线程 (CThreadOTP)emit sig_taskFinished(ret)
+  采集线程 (CThreadCapture)收到 GRAB 任务  如果含 PROCESS 标志 → 启动算法处理线程并行等待 等待所有图像采集完成  emit sig_taskFinished(ret)
+  烧录线程 (CThreadFlash)emit sig_taskFinished(ret)
+  最终检测线程 (CThreadFinalCheck)emit sig_taskFinished(ret)
+  
+  emit sig_taskFinished(ret)
+  子任务结果  任务推进
+  CThreadXXX::sig_taskFinished(TaskReturn)
+  QStationTask::slt_taskFinished(TaskReturn result)
+  emit sig_subTaskFinished(ret)
+  QStationManager::slt_subTaskFinished(StationReturn result)
+  QTaskFlowControl::slt_subTaskFinished(StationReturn result)
+  
+  全流程结束 UI更新
+  QStationManager::sig_taskFinished(PanelResult)
+  MainWindow::slt_taskFinished(PanelResult panelResult)
+  
+  每一步完成且结果为OK后才触发下一步，每一步之间通过Qt信号槽松耦合连接。采集和处理是唯一并行的两个步骤（GRAB | PROCESS），采集线程每拍一张图就实时发射给处理线程，实现了流水线并行。
+  
+  
+  
+  
+  
+  
+  
+2026-6-24
+1、  核心工作流程
+
+  1. 加载配方 → 配置检测区域、缺陷判定规则、分类参数
+  2. 取图 → 相机拍照（自控/受控/频闪模式）
+  3. 检测 → 调用 InspectLogic 算法进行缺陷检测
+  4. 分类 → 对检测到的缺陷进行 Code 分类和等级判定
+  5. 结果输出 → 饼图统计、CSV导出、TCP上报、图片保存/上传 DFS
+  
+2、DFS了解：深度优先搜索（DFS）是一种用于遍历或搜索树或图的算法。其核心思想是从一个节点开始，沿着一条路径尽可能深入地遍历，直到无法继续前进为止，然后回溯（返回上一步）并尝试其他路径。
+ 这种独特回溯思想可以通过递归实现，提供了一种自然且高效的实现方式。
