@@ -509,3 +509,15 @@ CRC校验	2字节	循环冗余校验值，用于检查数据在传输过程中�
 
 2026-8-22
 1、IO调试
+
+2026-8-27
+1、以panel为主键，如果同一个panel id不同时间检测的话，只会保存最新一次检测的结果，原来的结果会被删掉，插入新的，
+现在有一个新的需求，需要保留同样的panel的不同时间的检测结果，目前有一个方案是系统设置加时间戳
+需要改成，复合主键的方式，来存储相同panel，不同时间检测的结果
+BatchID vchar,                          -- 批次号，每次检测生成唯一值
+create table if not exists panels (PanelID vchar, BatchID vchar, Time vchar, Defects int, DustNum int, Grade vchar, TackTime real, Result vchar, 
+RunMode vchar, RecipeName vchar, isRecipePath int,PRIMARY KEY(PanelID,BatchID)
+
+2026-8-28
+1、AutoFocus模块
+负责自动对焦、偏光片(光圈)自动标定、以及Mapping(倍率/像素当量)自动校准，本质上是运动控制卡 + 相机  联动的一套闭环控制。
