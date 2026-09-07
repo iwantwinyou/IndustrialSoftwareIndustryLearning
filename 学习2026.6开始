@@ -521,3 +521,103 @@ RunMode vchar, RecipeName vchar, isRecipePath int,PRIMARY KEY(PanelID,BatchID)
 2026-8-28
 1、AutoFocus模块
 负责自动对焦、偏光片(光圈)自动标定、以及Mapping(倍率/像素当量)自动校准，本质上是运动控制卡 + 相机  联动的一套闭环控制。
+
+2026-8-31
+1、跟李工熟悉东正镜头自动对焦流程跟目前存在问题处理
+2、自动对焦模块功能熟悉，笔记输出
+
+2026-9-1
+1、AutoFocusMod  autofocusmod.h/.cpp  单例门面(GetInstance())，对外提供唯一 API，被Mainwindow.cpp 和 qmanualinspectionwidget.cpp 调用  
+2、AutoFocusProcess   autofocusprocess.h/.cpp    QThread 子线程，跑真正的对焦/标定算法
+
+对外 API（autofocusmod.h）
+
+  - 控制卡连接：connectController() / disconnectController() / getConnected()
+  - 四个运动轴：set/getLensPos(镜头轴)、set/getCameraPos(相机轴)、set/getAperturePos(光圈/偏光片轴)、set/getMainZPos(大Z
+    主轴)，均带 isORG 回零参数
+  - 轴关系：isSameAxis()(相机轴与主轴是否同轴)、useWorkStationPos()/getWorkStation()(是否按工位分别保存位置)
+  - IO：ioWrite/ioRead/outIORead
+  - 弹窗：showAutoFocusDlg()
+  - 信号：sig_currentPos(lensPos, cameraPos, thirdPos, mainZPos, definition) —— 对焦完成后把各轴位置发出去，正是主界面
+    mainwindow.cpp:143 连接后用来保存位置的那个信号；还有 autoFocusEnd(int lensPos)。
+
+  核心算法：AutoFocusProcess::run()（autofocusprocess.cpp:23）
+
+  一次完整流程分三步：
+
+  ① 自动对焦（清晰度） — :29 起
+  - 同轴(m_sameAxis)时对镜头轴对焦，否则对相机轴对焦。
+  - 两段式爬山法：先大步长(m_startLenStep)用 moveGrabCycleSharpChange 找斜率剧变区间，再小步长(m_stopLenStep)用
+    moveGrabCycleFindPeak 精确找峰值，最后 moveGrab 移到最清晰位置。
+  - 清晰度用 CalculateDefinitionGradient(:309)算：对灰度图每个像素与上下左右4邻域求绝对差分之和，除以像素数×255
+    归一化（4线程 OpenMP 并行）。值越大图像越清晰。
+
+  ② 偏光片/光圈自动标定（亮度） — :84 起
+  - 先 moveGrabAdjustExposure() 自动调曝光，再对光圈轴大步长+小步长找灰度最大值位置（infoMode=1
+    时改用灰度值而非清晰度作为评价函数），转到最亮角度。
+
+  ③ 自动 Mapping（像素当量校准） — :118 起
+  - 用 getImageMapping(:328) 计算当前 mapping 值：直方图平滑→找峰值→Otsu
+    阈值二值化→最大轮廓→minAreaRect→用外接矩形宽高除以面板分辨率(panelResX/Y)得到 w/h mapping。
+  - 与目标值 mappingTarget±mappingDeviaThr 比较，不达标就移动相机轴/大Z轴，再用线性插值 k = Δpos/Δmapping
+    预测下一位置，循环逼近，直到进入容差或触极限(带正负极限 IO 保护，m_errorCode 记录各种退出原因)。
+
+  主界面如何调用（mainwindow.cpp）
+
+  - :139-143：m_sysSetting.bAutoFocusEnable 开启时 AutoFocusMod::GetInstance() 并连接 sig_currentPos。
+  - :190/230：saveAutoFocusPos / loadAutoFocusPos，按工位保存/加载各轴位置到 System/AutoFocus 目录。
+  - :282 起：连接控制卡后逐步回位各轴到保存的位置。
+  - :763：on_actionAutoFocus_triggered() 触发时 showAutoFocusDlg() 弹出对焦界面。
+
+  在检测流程里的用法（qmanualinspectionwidget.cpp）
+
+  - :2363-2433：取当前倍率对应的目标位置，connectController() 后按 isSameAxis() 决定移动相机轴还是大Z轴到位。
+  - :2445-2462：检测结束回基准位。
+
+  简单说：AutoFocus 模块 = 控制四个轴 + 相机采图，用「清晰度爬山对焦 → 灰度爬山调偏光片 → 线性插值调
+  Mapping」三条闭环实现设备的光学自动校准，并对外暴露单例 API 和位置信号供主程序保存/复用。
+  
+  
+3、采集卡-》相机-》镜头
+4、科纳AOI 数据库连接不上问题排查[16:40:07.701][debug] [Debug]-0:数据库连接失败： "Access denied for user 'root'@'localhost' (using password: YES) QMYSQL: Unable to connect"
+用户名或密码错误
+梳理一下科纳AOI数据库使用
+（1）安装Mysql数据库
+（2）创建数据库
+（3）设置用户名跟密码（与代码一直，否则会出现数据库连接不上的问题）
+
+5、QSqlTableModel:
+QSqlTableModel 是一个非常实用的 Qt 模块，它提供了更高层次的接口来操作数据库中的单个表。它将数据库表的数据模型化，使其可以方便地与 Qt 的视图组件（如 QTableView）结合使用
+
+2026-9-2
+1、自动对焦：皮带的那个好像第一次用，我现在回峰用了三种策略，一种是和之前一样直接反向回峰，用于以前一直用的正运动电机方式，一种是反向多回一段再正向一次性走到峰值，这个适用于长步道/东正，第三种是多回一段再精扫到峰值，
+首次到达精扫峰值清晰度的90%就直接停，用10%的损失换稳定性。我把这三种都开放出来，你自己试哪种合适吧。现在一堆硬件上的不足，得软件来回改
+2、科纳AOI项目进度反馈
+ 
+2026-9-3
+1、panel主键修改成 panel跟time组合键，存在问题，结果会被覆盖，需修复？
+2、删图逻辑，目前离线模式是panel不会带后缀，如果是在线模式才会带后缀，
+分两种情况删除，如果是离线的话，全部删除，如果是在线模式，就按照OK，ER，NG的顺序来删除
+3、查询页面图标替换，代码review修改
+
+2026-9-5
+1、算法AOI软件，目录生成逻辑
+在线模式：保留 strFolderSuffix（如 _NG、_ER），用于区分 NG/ER 结果
+离线模式：清空 strFolderSuffix，不添加后缀
+当 strSaveImagePath == strSaveResultPath（路径相同）
+根目录/
+├── {日期}/
+│   └── {配方名}/（如果 bRecipeLevelPath = true）
+│       └── {PanelID}{后缀}/
+│           ├── Origin/    ← 原图
+│           └── Result/    ← 结果
+当 strSaveImagePath != strSaveResultPath（路径不同）
+原图根目录/
+└── {日期}/
+    └── {配方名}/（如果 bRecipeLevelPath = true）
+        └── {PanelID}{后缀}/   ← 原图
+
+结果根目录/
+└── {日期}/
+    └── {配方名}/（如果 bRecipeLevelPath = true）
+        └── {PanelID}{后缀}/   ← 结果
